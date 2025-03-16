@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/models"
+	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/repository"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -11,7 +12,7 @@ type URLRepo struct {
 	pool *pgxpool.Pool
 }
 
-func NewURLShortenerRepo(pool *pgxpool.Pool) *URLRepo {
+func NewURLShortenerRepo(pool *pgxpool.Pool) repository.UrlShortener {
 	return &URLRepo{
 		pool: pool,
 	}
@@ -98,4 +99,12 @@ func (u *URLRepo) GetAllShortURL(pagination models.Pagination) ([]models.ShortUR
 	}
 
 	return urlModels, nil
+}
+
+func (u *URLRepo) GetOriginalURL(shortURL string) (string, error) {
+	query := `SELECT original_url FROM urls WHERE short_url = $1`
+
+	var originalURL string
+	err := u.pool.QueryRow(context.Background(), query, shortURL).Scan(&originalURL)
+	return originalURL, err
 }

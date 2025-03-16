@@ -7,8 +7,11 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"sync"
 
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/db"
+	jsonlog "github.com/Mohd-Sayeedul-Hoda/tinypath/internal/jsonLog"
+	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/repository"
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/repository/postgres"
 
 	"github.com/joho/godotenv"
@@ -25,6 +28,13 @@ type config struct {
 		maxIdleConns int
 		maxIdleTime  string
 	}
+}
+
+type application struct {
+	cfg     config
+	logger  *jsonlog.Logger
+	urlRepo repository.UrlShortener
+	wg      sync.Mutex
 }
 
 func main() {
@@ -89,15 +99,23 @@ func run(ctx context.Context, getenv func(string) string, w io.Writer) error {
 		MaxIdleTime:  cfg.db.maxIdleTime,
 	}
 
+	logger := jsonlog.New(w, jsonlog.LevelInfo)
+
 	conn, err := db.OpenDB(ctx, dbConfig)
 	if err != nil {
 		return err
 	}
-
 	defer conn.Close()
 
+	logger.PrintInfo("database connection pool establisted", nil)
+
 	urlRepo := postgres.NewURLShortenerRepo(conn)
-	_ = urlRepo
+
+	app := &application{
+		cfg:     cfg,
+		logger:  logger,
+		urlRepo: urlRepo,
+	}
 
 	return nil
 }
