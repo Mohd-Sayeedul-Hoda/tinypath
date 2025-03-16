@@ -4,7 +4,7 @@ import "github.com/Mohd-Sayeedul-Hoda/url_shortner/internal/models"
 
 type UrlShorener interface {
 	CreateShortURL(shortURL *models.ShortURL) (*models.ShortURL, error)
-	UpdateShortURL(shortURL string, originalURL string) (*models.ShortURL, error)
+	UpdateShortURL(shortURL string, originalURL string) error
 	DeleteShortURL(shortURL string) error
 	GetOriginalURL(shortURL string) (string, error)
 	IncrementAccessCount(shortURL string) error
