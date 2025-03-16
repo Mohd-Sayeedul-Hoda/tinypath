@@ -60,7 +60,7 @@ func (l *Logger) PrintFatal(err error, properties map[string]string) {
 
 func (l *Logger) print(level Level, message string, properties map[string]string) (int, error) {
 
-	if level < l.minLevel {
+	if level < l.minLevel || level == LevelOff {
 		return 0, nil
 	}
 
@@ -72,7 +72,7 @@ func (l *Logger) print(level Level, message string, properties map[string]string
 		Trace      string            `json:"trace,omitempty"`
 	}{
 		Level:      level.string(),
-		Time:       time.UTC.String(),
+		Time:       time.Now().UTC().Format(time.RFC3339),
 		Message:    message,
 		Properties: properties,
 	}
