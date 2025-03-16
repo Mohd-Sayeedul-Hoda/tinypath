@@ -1,4 +1,4 @@
-module github.com/Mohd-Sayeedul-Hoda/url_shortner
+module github.com/Mohd-Sayeedul-Hoda/tinypath
 
 go 1.24.0
 

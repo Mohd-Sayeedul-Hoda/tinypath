@@ -10,8 +10,3 @@ type ShortURL struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
-
-type Pagination struct {
-	Limit  int
-	OffSet int
-}

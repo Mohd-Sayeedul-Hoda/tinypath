@@ -1,6 +1,6 @@
 package repository
 
-import "github.com/Mohd-Sayeedul-Hoda/url_shortner/internal/models"
+import "github.com/Mohd-Sayeedul-Hoda/tinypath/internal/models"
 
 type UrlShorener interface {
 	CreateShortURL(shortURL *models.ShortURL) (*models.ShortURL, error)

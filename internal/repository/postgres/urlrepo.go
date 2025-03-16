@@ -3,7 +3,7 @@ package postgres
 import (
 	"context"
 
-	"github.com/Mohd-Sayeedul-Hoda/url_shortner/internal/models"
+	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/models"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 

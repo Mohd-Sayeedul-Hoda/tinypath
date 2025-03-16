@@ -4,10 +4,12 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/Mohd-Sayeedul-Hoda/url_shortner/internal/db"
 	"io"
 	"os"
 	"os/signal"
+
+	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/db"
+	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/repository/postgres"
 
 	"github.com/joho/godotenv"
 )
@@ -93,6 +95,9 @@ func run(ctx context.Context, getenv func(string) string, w io.Writer) error {
 	}
 
 	defer conn.Close()
+
+	urlRepo := postgres.NewURLShortenerRepo(conn)
+	_ = urlRepo
 
 	return nil
 }
