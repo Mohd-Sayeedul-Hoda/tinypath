@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"container/list"
 	"context"
 
 	"github.com/Mohd-Sayeedul-Hoda/url_shortner/internal/models"
