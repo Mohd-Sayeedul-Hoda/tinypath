@@ -3,9 +3,12 @@ package routes
 import (
 	"net/http"
 
-	jsonlog "github.com/Mohd-Sayeedul-Hoda/tinypath/internal/jsonLog"
+	"github.com/Mohd-Sayeedul-Hoda/"
+	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/repository"
 )
 
-func addRoutes(mux http.ServeMux, cfg config, logger jsonlog.Logger) {
+func addRoutes(mux http.ServeMux, cfg config) {
+
+	mux.Handle("api/v1/shortlink")
 
 }

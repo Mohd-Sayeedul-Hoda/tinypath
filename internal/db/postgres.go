@@ -2,28 +2,23 @@ package db
 
 import (
 	"context"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"time"
+
+	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/config"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type Config struct {
-	DSN          string
-	MaxOpenConns int
-	MaxIdleConns int
-	MaxIdleTime  string
-}
+func OpenDB(ctx context.Context, cfg *config.Config) (*pgxpool.Pool, error) {
 
-func OpenDB(ctx context.Context, cfg Config) (*pgxpool.Pool, error) {
-
-	poolConfig, err := pgxpool.ParseConfig(cfg.DSN)
+	poolConfig, err := pgxpool.ParseConfig(cfg.DB.DSN)
 	if err != nil {
 		return nil, err
 	}
 
-	poolConfig.MaxConns = int32(cfg.MaxOpenConns)
-	poolConfig.MinConns = int32(cfg.MaxIdleConns)
+	poolConfig.MaxConns = int32(cfg.DB.MaxOpenConns)
+	poolConfig.MinConns = int32(cfg.DB.MaxIdleConns)
 
-	duration, err := time.ParseDuration(cfg.MaxIdleTime)
+	duration, err := time.ParseDuration(cfg.DB.MaxIdleTime)
 	if err != nil {
 		return nil, err
 	}
