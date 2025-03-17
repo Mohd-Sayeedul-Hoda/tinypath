@@ -117,5 +117,10 @@ func run(ctx context.Context, getenv func(string) string, w io.Writer) error {
 		urlRepo: urlRepo,
 	}
 
+	err = app.serve()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
