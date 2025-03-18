@@ -6,25 +6,16 @@ import (
 	"io"
 	"os"
 	"os/signal"
-	"sync"
 
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/config"
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/db"
 	jsonlog "github.com/Mohd-Sayeedul-Hoda/tinypath/internal/jsonLog"
-	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/repository"
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/repository/postgres"
 
 	"github.com/joho/godotenv"
 )
 
 const version = "1.0.0"
-
-type application struct {
-	cfg     *config.Config
-	logger  *jsonlog.Logger
-	urlRepo repository.UrlShortener
-	wg      sync.Mutex
-}
 
 func main() {
 	ctx := context.Background()
@@ -82,16 +73,6 @@ func run(ctx context.Context, getenv func(string) string, w io.Writer) error {
 
 	urlRepo := postgres.NewURLShortenerRepo(conn)
 
-	app := &application{
-		cfg:     cfg,
-		logger:  logger,
-		urlRepo: urlRepo,
-	}
-
-	err = app.serve()
-	if err != nil {
-		return err
-	}
-
+	_ = urlRepo
 	return nil
 }
