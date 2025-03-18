@@ -14,6 +14,11 @@ func HandleRoot(logger *jsonlog.Logger) http.HandlerFunc {
 			return
 		}
 
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+
 		response := map[string]string{
 			"message": "Welcome to Tiny URL!",
 		}
