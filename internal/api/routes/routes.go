@@ -9,10 +9,9 @@ import (
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/repository"
 )
 
-func AddRoutes(mux *http.ServeMux, cfg *config.Config, urlRepo repository.UrlShortener, loggger *jsonlog.Logger) {
+func AddRoutes(mux *http.ServeMux, cfg *config.Config, loggger *jsonlog.Logger, urlRepo repository.UrlShortener) {
 
-	mux.Handle("/", handler.HandleRoot(loggger))
-
-	mux.Handle("/v1/api/healthcheck", handler.HealthCheck(loggger))
+	mux.HandleFunc("/", handler.HandleRoot(loggger))
+	mux.HandleFunc("/api/v1/healthcheck", handler.HealthCheck(loggger))
 
 }

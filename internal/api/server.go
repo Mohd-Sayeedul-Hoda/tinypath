@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"net/http"
@@ -13,7 +13,7 @@ import (
 func NewServer(cfg *config.Config, logger *jsonlog.Logger, urlRepo repository.UrlShortener) http.Handler {
 	mux := http.NewServeMux()
 
-	routes.AddRoutes(mux, cfg, urlRepo)
+	routes.AddRoutes(mux, cfg, logger, urlRepo)
 
 	var handler http.Handler = mux
 	handler = middleware.LoggingMiddleware(logger, handler)

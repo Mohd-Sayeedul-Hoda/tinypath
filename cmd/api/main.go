@@ -4,9 +4,15 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
+	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
+	"sync"
+	"time"
 
+	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/api"
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/config"
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/db"
 	jsonlog "github.com/Mohd-Sayeedul-Hoda/tinypath/internal/jsonLog"
@@ -61,18 +67,60 @@ func run(ctx context.Context, getenv func(string) string, w io.Writer) error {
 
 	cfg := config.InitializeConfig(getenv)
 
-	logger := jsonlog.New(w, jsonlog.LevelInfo)
+	log := jsonlog.New(w, jsonlog.LevelInfo)
 
 	conn, err := db.OpenDB(ctx, cfg)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
-
-	logger.PrintInfo("database connection pool establisted", nil)
+	log.PrintInfo("database connection pool establisted", nil)
 
 	urlRepo := postgres.NewURLShortenerRepo(conn)
 
-	_ = urlRepo
+	srv := api.NewServer(cfg, log, urlRepo)
+
+	httpServer := http.Server{
+		Addr:    net.JoinHostPort(cfg.Host, strconv.Itoa(cfg.Port)),
+		Handler: srv,
+	}
+
+	go func() {
+		log.PrintInfo("http server running", map[string]string{
+			"addr": httpServer.Addr,
+			"env":  cfg.Env,
+		})
+		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.PrintError(err, map[string]string{
+				"message": "error listening and serving",
+			})
+		}
+	}()
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	go func() {
+		defer wg.Done()
+		<-ctx.Done()
+
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		log.PrintInfo("shutting down server", nil)
+
+		if err := httpServer.Shutdown(shutdownCtx); err != nil {
+			log.PrintError(err, map[string]string{
+				"message": "error shutting down http server",
+			})
+		}
+	}()
+
+	wg.Wait()
+
+	log.PrintInfo("stopped server", map[string]string{
+		"addr": httpServer.Addr,
+	})
+
 	return nil
 }
