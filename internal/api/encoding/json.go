@@ -2,12 +2,15 @@ package encoding
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+
+	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/api/request"
 )
 
-func WriteJson[T any](w http.ResponseWriter, status int, headers http.Header, data T) error {
+func EncodeJson[T any](w http.ResponseWriter, headers *http.Request, status int, data T) error {
 
-	for key, value := range headers {
+	for key, value := range headers.Header {
 		w.Header()[key] = value
 	}
 
@@ -29,5 +32,20 @@ func DecodeJson[T any](r *http.Request) (T, error) {
 	}
 
 	return data, nil
+}
+
+func Validated[T request.Validator](r *http.Request) (T, map[string]string, error) {
+	var data T
+
+	err := json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		return data, nil, err
+	}
+
+	if problems := data.Valid(r.Context()); len(problems) > 0 {
+		return data, problems, fmt.Errorf("invalid %T: %d problems", data, len(problems))
+	}
+
+	return data, nil, nil
 
 }

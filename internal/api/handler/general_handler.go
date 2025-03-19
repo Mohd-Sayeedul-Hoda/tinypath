@@ -10,6 +10,7 @@ import (
 func HandleRoot(logger *jsonlog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
+			w.Header().Set("Allow", http.MethodGet)
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
@@ -23,7 +24,7 @@ func HandleRoot(logger *jsonlog.Logger) http.HandlerFunc {
 			"message": "Welcome to Tiny URL!",
 		}
 
-		err := encoding.WriteJson(w, http.StatusOK, r.Header, response)
+		err := encoding.EncodeJson(w, r, http.StatusOK, response)
 		if err != nil {
 			logger.PrintError(err, map[string]string{
 				"request_method": r.Method,
@@ -38,6 +39,7 @@ func HandleRoot(logger *jsonlog.Logger) http.HandlerFunc {
 func HealthCheck(logger *jsonlog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
+			w.Header().Set("Allow", http.MethodGet)
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
@@ -47,7 +49,7 @@ func HealthCheck(logger *jsonlog.Logger) http.HandlerFunc {
 			"message": "service is healthy",
 		}
 
-		err := encoding.WriteJson(w, http.StatusOK, r.Header, response)
+		err := encoding.EncodeJson(w, r, http.StatusOK, response)
 		if err != nil {
 			logger.PrintError(err, map[string]string{
 				"request_method": r.Method,
@@ -59,3 +61,19 @@ func HealthCheck(logger *jsonlog.Logger) http.HandlerFunc {
 	}
 
 }
+
+func HandleInternalServerError(w http.ResponseWriter, r *http.Request, err error, logger *jsonlog.Logger, message string) {
+
+	logger.PrintError(err, map[string]string{
+		"request_method": r.Method,
+		"request_url":    r.URL.String(),
+		"error_message":  message,
+	})
+
+	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+}
+
+// func HandleMethodNotAllowed(w http.ResponseWriter, r *http.Request, allowedMethods []string) {
+// 	w.Header().Set("Allow", strings.Join(allowedMethods, ", "))
+// 	http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+// }

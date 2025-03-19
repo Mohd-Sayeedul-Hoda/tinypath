@@ -92,7 +92,7 @@ func run(ctx context.Context, getenv func(string) string, w io.Writer) error {
 		})
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.PrintError(err, map[string]string{
-				"error": "error listening and serving",
+				"message": "error listening and serving",
 			})
 		}
 	}()
@@ -111,7 +111,7 @@ func run(ctx context.Context, getenv func(string) string, w io.Writer) error {
 
 		if err := httpServer.Shutdown(shutdownCtx); err != nil {
 			log.PrintError(err, map[string]string{
-				"error": "error shutting down http server",
+				"message": "error shutting down http server",
 			})
 		}
 	}()
