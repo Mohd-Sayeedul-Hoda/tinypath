@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/api/encoding"
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/api/request"
+	commonErr "github.com/Mohd-Sayeedul-Hoda/tinypath/internal/errors"
 	jsonlog "github.com/Mohd-Sayeedul-Hoda/tinypath/internal/jsonLog"
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/repository"
 )
@@ -31,7 +33,17 @@ func CreateShortLink(logger *jsonlog.Logger, urlRepo repository.UrlShortener) ht
 			return
 		}
 
-		_ = shortURL
+		if shortURL.ShortURL != "" {
+			orginalURL, err := urlRepo.GetOriginalURL(shortURL.ShortURL)
+			if err != nil {
+				if !errors.Is(err, commonErr.ErrShortURLNotFound) {
+					HandleInternalServerError(w, r, err, logger, "failder to get the original url from database")
+				}
+			}
+			if orginalURL != "" {
+
+			}
+		}
 
 	}
 

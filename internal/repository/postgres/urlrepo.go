@@ -2,9 +2,12 @@ package postgres
 
 import (
 	"context"
+	"errors"
 
+	commonErr "github.com/Mohd-Sayeedul-Hoda/tinypath/internal/errors"
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/models"
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/repository"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -29,10 +32,13 @@ func (u *URLRepo) CreateShortURL(urlInfo *models.ShortURL) (*models.ShortURL, er
 		urlInfo.CreatedAt,
 	).Scan(&urlInfo.ID)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, commonErr.ErrShortURLNotFound
+		}
+		return nil, commonErr.NewCustomInternalErr(err)
 	}
 
-	return nil, nil
+	return urlInfo, nil
 }
 
 func (u *URLRepo) UpdateShortURL(shortURL string, originalURL string) error {
@@ -41,14 +47,14 @@ func (u *URLRepo) UpdateShortURL(shortURL string, originalURL string) error {
 	WHERE  short_url = $2`
 
 	_, err := u.pool.Exec(context.Background(), query, originalURL, shortURL)
-	return err
+	return commonErr.NewCustomInternalErr(err)
 }
 
 func (u *URLRepo) DeleteShortURL(shortURL string) error {
 
 	query := `DELETE from urls where short_url = $1`
 	_, err := u.pool.Exec(context.Background(), query, shortURL)
-	return err
+	return commonErr.NewCustomInternalErr(err)
 }
 
 func (u *URLRepo) IncrementAccessCount(shortURL string) error {
@@ -56,7 +62,7 @@ func (u *URLRepo) IncrementAccessCount(shortURL string) error {
 	update_at = NOW() where short_url = $1`
 
 	_, err := u.pool.Exec(context.Background(), query, shortURL)
-	return err
+	return commonErr.NewCustomInternalErr(err)
 }
 
 func (u *URLRepo) GetShortURLStats(shortURL string) (*models.ShortURL, error) {
@@ -66,7 +72,10 @@ func (u *URLRepo) GetShortURLStats(shortURL string) (*models.ShortURL, error) {
 
 	err := u.pool.QueryRow(context.Background(), query, shortURL).Scan(&urlInfo)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, commonErr.ErrShortURLNotFound
+		}
+		return nil, commonErr.NewCustomInternalErr(err)
 	}
 
 	return urlInfo, nil
@@ -83,9 +92,8 @@ func (u *URLRepo) GetAllShortURL(pagination models.Pagination) ([]models.ShortUR
 
 	rows, err := u.pool.Query(context.Background(), query, pagination.Limit, pagination.OffSet)
 	defer rows.Close()
-
 	if err != nil {
-		return nil, err
+		return nil, commonErr.NewCustomInternalErr(err)
 	}
 
 	var urlModels []models.ShortURL
@@ -93,7 +101,7 @@ func (u *URLRepo) GetAllShortURL(pagination models.Pagination) ([]models.ShortUR
 	for rows.Next() {
 		var urlModel models.ShortURL
 		if err := rows.Scan(&urlModel.ShortURL, &urlModel.OriginalURL, &urlModel.AccessCount, &urlModel.CreatedAt, &urlModel.UpdatedAt); err != nil {
-			return nil, err
+			return nil, commonErr.NewCustomInternalErr(err)
 		}
 		urlModels = append(urlModels, urlModel)
 	}
@@ -106,5 +114,11 @@ func (u *URLRepo) GetOriginalURL(shortURL string) (string, error) {
 
 	var originalURL string
 	err := u.pool.QueryRow(context.Background(), query, shortURL).Scan(&originalURL)
-	return originalURL, err
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", commonErr.ErrShortURLNotFound
+		}
+		return "", commonErr.NewCustomInternalErr(err)
+	}
+	return originalURL, nil
 }

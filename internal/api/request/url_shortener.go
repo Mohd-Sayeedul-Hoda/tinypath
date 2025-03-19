@@ -25,6 +25,11 @@ func (s *ShortURL) Valid(ctx context.Context) map[string]string {
 	}
 
 	s.ShortURL = strings.TrimSpace(s.ShortURL)
+	if s.ShortURL != "" {
+		if len(s.ShortURL) >= 5 {
+			problems["short_url"] = "short url should be less or equal to 5"
+		}
+	}
 
 	return problems
 }

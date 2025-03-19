@@ -14,4 +14,7 @@ func AddRoutes(mux *http.ServeMux, cfg *config.Config, loggger *jsonlog.Logger, 
 	mux.HandleFunc("/", handler.HandleRoot(loggger))
 	mux.HandleFunc("/api/v1/healthcheck", handler.HealthCheck(loggger))
 
+	//tiny url paths
+	mux.HandleFunc("/api/v1/short", handler.CreateShortLink(loggger, urlRepo))
+
 }
