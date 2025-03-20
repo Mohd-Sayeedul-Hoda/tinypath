@@ -71,4 +71,52 @@ func CreateShortLink(logger *jsonlog.Logger, urlRepo repository.UrlShortener) ht
 	}
 }
 
-// func ()
+func GetShortLink(log *jsonlog.Logger, urlRepo repository.UrlShortener) http.HandlerFunc {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		shortURL := r.PathValue("short")
+		if shortURL == "" {
+			response := map[string]string{
+				"message": "short url value should not be empty",
+			}
+			err := encoding.EncodeJson(w, r, http.StatusBadRequest, response)
+			if err != nil {
+				HandleInternalServerError(w, r, err, log, "unable to encode the json")
+				return
+			}
+			return
+		}
+
+		urlModel, err := urlRepo.GetShortURL(shortURL)
+		if err != nil {
+			if errors.Is(err, commonErr.ErrShortURLNotFound) {
+				response := map[string]string{
+					"message": err.Error(),
+				}
+				err = encoding.EncodeJson(w, r, http.StatusNotFound, response)
+				if err != nil {
+					HandleInternalServerError(w, r, err, log, "unable to encode the json")
+				}
+				return
+			} else {
+				HandleInternalServerError(w, r, err, log, "")
+				return
+			}
+		}
+
+		response := request.ShortUrlResp{
+			ID:          urlModel.ID,
+			ShortURL:    urlModel.ShortURL,
+			OriginalURL: urlModel.OriginalURL,
+			AccessCount: urlModel.AccessCount,
+			CreatedAt:   urlModel.CreatedAt,
+			UpdatedAt:   urlModel.UpdatedAt,
+		}
+
+		err = encoding.EncodeJson(w, r, http.StatusOK, response)
+		if err != nil {
+			HandleInternalServerError(w, r, err, log, "unable to encode the json")
+			return
+		}
+	}
+}
