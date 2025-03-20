@@ -8,6 +8,6 @@ type UrlShortener interface {
 	DeleteShortURL(shortURL string) error
 	GetOriginalURL(shortURL string) (string, error)
 	IncrementAccessCount(shortURL string) error
-	GetShortURLStats(shortURL string) (*models.ShortURL, error)
+	GetShortURL(shortURL string) (*models.ShortURL, error)
 	GetAllShortURL(pagination models.Pagination) ([]models.ShortURL, error)
 }

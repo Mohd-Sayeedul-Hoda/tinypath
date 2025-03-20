@@ -9,11 +9,6 @@ import (
 
 func HandleRoot(logger *jsonlog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			w.Header().Set("Allow", http.MethodGet)
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
 
 		if r.URL.Path != "/" {
 			http.NotFound(w, r)
@@ -38,11 +33,6 @@ func HandleRoot(logger *jsonlog.Logger) http.HandlerFunc {
 
 func HealthCheck(logger *jsonlog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			w.Header().Set("Allow", http.MethodGet)
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
 
 		response := map[string]string{
 			"status":  "ok",

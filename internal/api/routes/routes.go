@@ -11,10 +11,11 @@ import (
 
 func AddRoutes(mux *http.ServeMux, cfg *config.Config, loggger *jsonlog.Logger, urlRepo repository.UrlShortener) {
 
-	mux.HandleFunc("/", handler.HandleRoot(loggger))
-	mux.HandleFunc("/api/v1/healthcheck", handler.HealthCheck(loggger))
+	mux.HandleFunc("GET /", handler.HandleRoot(loggger))
+	mux.HandleFunc("GET /api/v1/healthcheck", handler.HealthCheck(loggger))
 
 	//tiny url paths
-	mux.HandleFunc("/api/v1/short", handler.CreateShortLink(loggger, urlRepo))
+	mux.HandleFunc("POST /api/v1/short", handler.CreateShortLink(loggger, urlRepo))
+	//mux.HandleFunc("GET api/v1/{short}", handler.)
 
 }

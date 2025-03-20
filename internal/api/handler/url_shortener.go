@@ -15,11 +15,6 @@ import (
 
 func CreateShortLink(logger *jsonlog.Logger, urlRepo repository.UrlShortener) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			w.Header().Set("Allow", http.MethodPost)
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
 
 		shortURL, problems, err := encoding.Validated[*request.ShortURL](r)
 
@@ -75,3 +70,5 @@ func CreateShortLink(logger *jsonlog.Logger, urlRepo repository.UrlShortener) ht
 
 	}
 }
+
+// func ()

@@ -65,7 +65,7 @@ func (u *URLRepo) IncrementAccessCount(shortURL string) error {
 	return commonErr.NewCustomInternalErr(err)
 }
 
-func (u *URLRepo) GetShortURLStats(shortURL string) (*models.ShortURL, error) {
+func (u *URLRepo) GetShortURL(shortURL string) (*models.ShortURL, error) {
 
 	var urlInfo *models.ShortURL
 	query := `SELECT original_url, short_url, access_count, created_at, updated_at FROM urls WHERE short_url = $1`
