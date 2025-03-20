@@ -6,8 +6,10 @@ import (
 
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/api/encoding"
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/api/request"
+	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/api/utils"
 	commonErr "github.com/Mohd-Sayeedul-Hoda/tinypath/internal/errors"
 	jsonlog "github.com/Mohd-Sayeedul-Hoda/tinypath/internal/jsonLog"
+	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/models"
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/repository"
 )
 
@@ -28,23 +30,48 @@ func CreateShortLink(logger *jsonlog.Logger, urlRepo repository.UrlShortener) ht
 			}
 			return
 		}
+
+		if shortURL.ShortURL != "" {
+
+			_, err = urlRepo.GetOriginalURL(shortURL.ShortURL)
+			if err != nil {
+				if errors.Is(err, commonErr.ErrInternalServerError) {
+					HandleInternalServerError(w, r, err, logger, "unable to get original url")
+					return
+				} else {
+					response := map[string]string{
+						"short_url": shortURL.ShortURL,
+						"message":   "short url already exists",
+					}
+					encoding.EncodeJson(w, r, http.StatusConflict, response)
+					return
+				}
+			}
+		} else {
+			shortURL.ShortURL = utils.GenerateShortURL()
+		}
+
+		modelURL, err := urlRepo.CreateShortURL(&models.ShortURL{
+			ShortURL:    shortURL.ShortURL,
+			OriginalURL: shortURL.OriginalURL,
+		})
 		if err != nil {
-			HandleInternalServerError(w, r, err, logger, "failed to encode validation errors")
+			HandleInternalServerError(w, r, err, logger, "unable to create short url")
 			return
 		}
 
-		if shortURL.ShortURL != "" {
-			orginalURL, err := urlRepo.GetOriginalURL(shortURL.ShortURL)
-			if err != nil {
-				if !errors.Is(err, commonErr.ErrShortURLNotFound) {
-					HandleInternalServerError(w, r, err, logger, "failder to get the original url from database")
-				}
-			}
-			if orginalURL != "" {
-
-			}
+		response := request.ShortUrlResp{
+			ID:          modelURL.ID,
+			ShortURL:    modelURL.ShortURL,
+			OriginalURL: modelURL.OriginalURL,
+			CreatedAt:   modelURL.CreatedAt,
+			UpdatedAt:   modelURL.UpdatedAt,
+		}
+		err = encoding.EncodeJson(w, r, http.StatusCreated, response)
+		if err != nil {
+			HandleInternalServerError(w, r, err, logger, "unable to create short url")
+			return
 		}
 
 	}
-
 }

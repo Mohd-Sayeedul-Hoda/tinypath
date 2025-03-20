@@ -33,7 +33,7 @@ func (u *URLRepo) CreateShortURL(urlInfo *models.ShortURL) (*models.ShortURL, er
 	).Scan(&urlInfo.ID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, commonErr.ErrShortURLNotFound
+			return nil, commonErr.ErrShortURLAlreadyExists
 		}
 		return nil, commonErr.NewCustomInternalErr(err)
 	}

@@ -6,8 +6,7 @@ CREATE TABLE urls (
     original_url TEXT NOT NULL,
     access_count INTEGER DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    expires_at TIMESTAMP
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 -- +goose StatementEnd
 
