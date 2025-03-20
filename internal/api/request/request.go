@@ -24,7 +24,7 @@ type ShortUrlResp struct {
 func (s *ShortURL) Valid(ctx context.Context) map[string]string {
 	problems := make(map[string]string)
 
-	s.OriginalURL = strings.TrimSpace(s.ShortURL)
+	s.OriginalURL = strings.TrimSpace(s.OriginalURL)
 	if s.OriginalURL == "" {
 		problems["original_url"] = "original url cannot be empty"
 	} else {
@@ -44,7 +44,7 @@ func (s *ShortURL) Valid(ctx context.Context) map[string]string {
 	s.ShortURL = strings.TrimSpace(s.ShortURL)
 	if s.ShortURL != "" {
 		if len(s.ShortURL) >= 8 {
-			problems["short_url"] = "short url should be less or equal to 5"
+			problems["short_url"] = "short url should be less or equal to 8"
 		}
 	}
 

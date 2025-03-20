@@ -23,7 +23,7 @@ func NewURLShortenerRepo(pool *pgxpool.Pool) repository.UrlShortener {
 
 func (u *URLRepo) CreateShortURL(urlInfo *models.ShortURL) (*models.ShortURL, error) {
 
-	query := `INSERT INTO urls (original_url, short_url, access_count, created_at) VALUE ($1, $2, $3, $4) RETURING id`
+	query := `INSERT INTO urls (original_url, short_url, access_count, created_at) VALUES ($1, $2, $3, $4) RETURNING id`
 
 	err := u.pool.QueryRow(context.Background(), query,
 		urlInfo.OriginalURL,

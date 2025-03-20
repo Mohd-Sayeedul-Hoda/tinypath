@@ -8,11 +8,7 @@ import (
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/api/request"
 )
 
-func EncodeJson[T any](w http.ResponseWriter, headers *http.Request, status int, data T) error {
-
-	for key, value := range headers.Header {
-		w.Header()[key] = value
-	}
+func EncodeJson[T any](w http.ResponseWriter, r *http.Request, status int, data T) error {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)

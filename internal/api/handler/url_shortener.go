@@ -19,28 +19,27 @@ func CreateShortLink(logger *jsonlog.Logger, urlRepo repository.UrlShortener) ht
 		shortURL, problems, err := encoding.Validated[*request.ShortURL](r)
 
 		if len(problems) > 0 {
-			err = encoding.EncodeJson(w, r, http.StatusBadRequest, problems)
-			if err != nil {
-				HandleInternalServerError(w, r, err, logger, "failed to encode validation errors")
-			}
+			respondWithJSON(w, r, http.StatusBadRequest, problems, logger)
 			return
 		}
 
 		if shortURL.ShortURL != "" {
 
-			_, err = urlRepo.GetOriginalURL(shortURL.ShortURL)
+			exists, err := urlRepo.GetOriginalURL(shortURL.ShortURL)
+
 			if err != nil {
-				if errors.Is(err, commonErr.ErrInternalServerError) {
+				if !errors.Is(err, commonErr.ErrShortURLNotFound) {
 					HandleInternalServerError(w, r, err, logger, "unable to get original url")
 					return
-				} else {
-					response := map[string]string{
-						"short_url": shortURL.ShortURL,
-						"message":   "short url already exists",
-					}
-					encoding.EncodeJson(w, r, http.StatusConflict, response)
-					return
 				}
+			}
+
+			if exists != "" {
+				response := map[string]string{
+					"message": commonErr.ErrShortURLAlreadyExists.Error(),
+				}
+				respondWithJSON(w, r, http.StatusConflict, response, logger)
+				return
 			}
 		} else {
 			shortURL.ShortURL = utils.GenerateShortURL()
@@ -62,16 +61,12 @@ func CreateShortLink(logger *jsonlog.Logger, urlRepo repository.UrlShortener) ht
 			CreatedAt:   modelURL.CreatedAt,
 			UpdatedAt:   modelURL.UpdatedAt,
 		}
-		err = encoding.EncodeJson(w, r, http.StatusCreated, response)
-		if err != nil {
-			HandleInternalServerError(w, r, err, logger, "unable to create short url")
-			return
-		}
 
+		respondWithJSON(w, r, http.StatusOK, response, logger)
 	}
 }
 
-func GetShortLink(log *jsonlog.Logger, urlRepo repository.UrlShortener) http.HandlerFunc {
+func GetShortLink(logger *jsonlog.Logger, urlRepo repository.UrlShortener) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		shortURL := r.PathValue("short")
@@ -79,11 +74,7 @@ func GetShortLink(log *jsonlog.Logger, urlRepo repository.UrlShortener) http.Han
 			response := map[string]string{
 				"message": "short url value should not be empty",
 			}
-			err := encoding.EncodeJson(w, r, http.StatusBadRequest, response)
-			if err != nil {
-				HandleInternalServerError(w, r, err, log, "unable to encode the json")
-				return
-			}
+			respondWithJSON(w, r, http.StatusBadRequest, response, logger)
 			return
 		}
 
@@ -93,13 +84,10 @@ func GetShortLink(log *jsonlog.Logger, urlRepo repository.UrlShortener) http.Han
 				response := map[string]string{
 					"message": err.Error(),
 				}
-				err = encoding.EncodeJson(w, r, http.StatusNotFound, response)
-				if err != nil {
-					HandleInternalServerError(w, r, err, log, "unable to encode the json")
-				}
+				respondWithJSON(w, r, http.StatusNotFound, response, logger)
 				return
 			} else {
-				HandleInternalServerError(w, r, err, log, "")
+				HandleInternalServerError(w, r, err, logger, "")
 				return
 			}
 		}
@@ -113,10 +101,6 @@ func GetShortLink(log *jsonlog.Logger, urlRepo repository.UrlShortener) http.Han
 			UpdatedAt:   urlModel.UpdatedAt,
 		}
 
-		err = encoding.EncodeJson(w, r, http.StatusOK, response)
-		if err != nil {
-			HandleInternalServerError(w, r, err, log, "unable to encode the json")
-			return
-		}
+		respondWithJSON(w, r, http.StatusOK, response, logger)
 	}
 }
