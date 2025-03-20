@@ -13,10 +13,10 @@ type ShortURL struct {
 }
 
 type ShortUrlResp struct {
-	ID          string    `json:"id"`
-	ShortURL    string    `json:"short_url"`
-	OriginalURL string    `json:"original_url"`
-	AccessCount int       `json:"access_count"`
+	ID          string    `json:"id,omitempty"`
+	ShortURL    string    `json:"short_url,omitempty"`
+	OriginalURL string    `json:"original_url,omitempty"`
+	AccessCount int       `json:"access_count,omitempty"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }

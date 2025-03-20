@@ -22,15 +22,13 @@ func NewURLShortenerRepo(pool *pgxpool.Pool) repository.UrlShortener {
 }
 
 func (u *URLRepo) CreateShortURL(urlInfo *models.ShortURL) (*models.ShortURL, error) {
-
-	query := `INSERT INTO urls (original_url, short_url, access_count, created_at) VALUES ($1, $2, $3, $4) RETURNING id`
+	query := `INSERT INTO urls (original_url, short_url, access_count) VALUES ($1, $2, $3) RETURNING id, created_at, updated_at`
 
 	err := u.pool.QueryRow(context.Background(), query,
 		urlInfo.OriginalURL,
 		urlInfo.ShortURL,
 		urlInfo.AccessCount,
-		urlInfo.CreatedAt,
-	).Scan(&urlInfo.ID)
+	).Scan(&urlInfo.ID, &urlInfo.CreatedAt, &urlInfo.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, commonErr.ErrShortURLAlreadyExists
@@ -67,10 +65,16 @@ func (u *URLRepo) IncrementAccessCount(shortURL string) error {
 
 func (u *URLRepo) GetShortURL(shortURL string) (*models.ShortURL, error) {
 
-	var urlInfo *models.ShortURL
+	var urlInfo models.ShortURL
 	query := `SELECT original_url, short_url, access_count, created_at, updated_at FROM urls WHERE short_url = $1`
 
-	err := u.pool.QueryRow(context.Background(), query, shortURL).Scan(&urlInfo)
+	err := u.pool.QueryRow(context.Background(), query, shortURL).Scan(
+		&urlInfo.OriginalURL,
+		&urlInfo.ShortURL,
+		&urlInfo.AccessCount,
+		&urlInfo.CreatedAt,
+		&urlInfo.UpdatedAt,
+	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, commonErr.ErrShortURLNotFound
@@ -78,7 +82,7 @@ func (u *URLRepo) GetShortURL(shortURL string) (*models.ShortURL, error) {
 		return nil, commonErr.NewCustomInternalErr(err)
 	}
 
-	return urlInfo, nil
+	return &urlInfo, nil
 }
 
 func (u *URLRepo) GetAllShortURL(pagination models.Pagination) ([]models.ShortURL, error) {
