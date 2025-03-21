@@ -179,3 +179,33 @@ func UpdateShortLink(logger *jsonlog.Logger, urlRepo repository.UrlShortener) ht
 		respondWithJSON(w, r, http.StatusOK, response, logger)
 	}
 }
+
+func ShortURLRedirect(logger *jsonlog.Logger, urlRepo repository.UrlShortener) http.HandlerFunc {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		shortURL := r.PathValue("short")
+		if shortURL == "" {
+			response := map[string]string{
+				"message": "short url value should not be empty",
+			}
+			respondWithJSON(w, r, http.StatusBadRequest, response, logger)
+			return
+		}
+
+		originalURL, err := urlRepo.GetOriginalURL(shortURL)
+		if err != nil {
+			if errors.Is(err, commonErr.ErrShortURLNotFound) {
+				response := map[string]string{
+					"message": err.Error(),
+				}
+				respondWithJSON(w, r, http.StatusNotFound, response, logger)
+				return
+			}
+			HandleInternalServerError(w, r, err, logger, "error while finding original url")
+			return
+		}
+
+		http.Redirect(w, r, originalURL, http.StatusPermanentRedirect)
+	}
+
+}

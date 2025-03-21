@@ -14,6 +14,9 @@ func AddRoutes(mux *http.ServeMux, cfg *config.Config, loggger *jsonlog.Logger, 
 	mux.HandleFunc("GET /", handler.HandleRoot(loggger))
 	mux.HandleFunc("GET /api/v1/healthcheck", handler.HealthCheck(loggger))
 
+	// redirect of short url
+	mux.HandleFunc("GET /{short}", handler.ShortURLRedirect(loggger, urlRepo))
+
 	//tiny url paths
 	mux.HandleFunc("POST /api/v1/short", handler.CreateShortLink(loggger, urlRepo))
 	mux.HandleFunc("GET /api/v1/short/{short}", handler.GetShortLink(loggger, urlRepo))
