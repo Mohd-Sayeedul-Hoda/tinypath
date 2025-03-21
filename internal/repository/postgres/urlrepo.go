@@ -51,8 +51,16 @@ func (u *URLRepo) UpdateShortURL(shortURL string, originalURL string) error {
 func (u *URLRepo) DeleteShortURL(shortURL string) error {
 
 	query := `DELETE from urls where short_url = $1`
-	_, err := u.pool.Exec(context.Background(), query, shortURL)
-	return commonErr.NewCustomInternalErr(err)
+	result, err := u.pool.Exec(context.Background(), query, shortURL)
+	if err != nil {
+		return commonErr.NewCustomInternalErr(err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return commonErr.ErrShortURLNotFound
+	}
+
+	return nil
 }
 
 func (u *URLRepo) IncrementAccessCount(shortURL string) error {
