@@ -49,9 +49,8 @@ URLSHORTNER_DB_DSN=postgres://username:password@host:5432/url_shortener?sslmode=
 
 This project uses Goose for managing database migrations.
 Setting Up Migrations
-```bash
+
 Install Goose (if not installed):
-```
 ```bash
 go install github.com/pressly/goose/v3/cmd/goose@latest
 ```
