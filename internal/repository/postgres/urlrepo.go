@@ -41,11 +41,20 @@ func (u *URLRepo) CreateShortURL(urlInfo *models.ShortURL) (*models.ShortURL, er
 
 func (u *URLRepo) UpdateShortURL(shortURL string, originalURL string) error {
 
-	query := `UPDATE urls SET original_url = $1, update_at = NOW() 
+	query := `UPDATE urls SET original_url = $1, updated_at = NOW() 
 	WHERE  short_url = $2`
 
-	_, err := u.pool.Exec(context.Background(), query, originalURL, shortURL)
-	return commonErr.NewCustomInternalErr(err)
+	result, err := u.pool.Exec(context.Background(), query, originalURL, shortURL)
+	if err != nil {
+		return commonErr.NewCustomInternalErr(err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return commonErr.ErrShortURLNotFound
+	}
+
+	return nil
+
 }
 
 func (u *URLRepo) DeleteShortURL(shortURL string) error {

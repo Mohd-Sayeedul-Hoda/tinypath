@@ -12,6 +12,10 @@ type ShortURL struct {
 	OriginalURL string `json:"original_url"`
 }
 
+type UpdateShortURLRequest struct {
+	OriginalURL string `json:"original_url"`
+}
+
 type ShortUrlResp struct {
 	ID          string    `json:"id,omitempty"`
 	ShortURL    string    `json:"short_url,omitempty"`
@@ -24,13 +28,38 @@ type ShortUrlResp struct {
 func (s *ShortURL) Valid(ctx context.Context) map[string]string {
 	problems := make(map[string]string)
 
-	s.OriginalURL = strings.TrimSpace(s.OriginalURL)
-	if s.OriginalURL == "" {
+	OriginalURLValidate(problems, s.OriginalURL)
+	ShortURLValidate(problems, s.ShortURL)
+	return problems
+}
+
+func (s *UpdateShortURLRequest) Valid(ctx context.Context) map[string]string {
+	problems := make(map[string]string)
+
+	OriginalURLValidate(problems, s.OriginalURL)
+	return problems
+}
+
+func ShortURLValidate(problems map[string]string, shortURL string) {
+
+	parsedURL := strings.TrimSpace(shortURL)
+	if parsedURL != "" {
+		if len(parsedURL) > 8 {
+			problems["short_url"] = "short url should be less or equal to 8"
+		}
+	}
+}
+
+func OriginalURLValidate(problems map[string]string, OriginalURL string) {
+
+	OriginalURL = strings.TrimSpace(OriginalURL)
+	if OriginalURL == "" {
 		problems["original_url"] = "original url cannot be empty"
 	} else {
-		parsedURL, err := url.Parse(s.OriginalURL)
+		parsedURL, err := url.Parse(OriginalURL)
 		if err != nil {
 			problems["original_url"] = "original url should be valid url"
+			return
 		}
 		if parsedURL.Scheme == "" {
 			problems["original_url"] = "original url should include a schema (e.g., http:// or https://)"
@@ -40,13 +69,4 @@ func (s *ShortURL) Valid(ctx context.Context) map[string]string {
 			problems["original_url"] = "original url scheme should be either http or https"
 		}
 	}
-
-	s.ShortURL = strings.TrimSpace(s.ShortURL)
-	if s.ShortURL != "" {
-		if len(s.ShortURL) >= 8 {
-			problems["short_url"] = "short url should be less or equal to 8"
-		}
-	}
-
-	return problems
 }

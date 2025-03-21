@@ -137,3 +137,45 @@ func DeleteShortLink(logger *jsonlog.Logger, urlRepo repository.UrlShortener) ht
 		respondWithJSON(w, r, http.StatusOK, response, logger)
 	}
 }
+
+func UpdateShortLink(logger *jsonlog.Logger, urlRepo repository.UrlShortener) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		shortURL := r.PathValue("short")
+		if shortURL == "" {
+			response := map[string]string{
+				"message": "short url value should not be empty",
+			}
+			respondWithJSON(w, r, http.StatusBadRequest, response, logger)
+			return
+		}
+
+		originalURL, problems, err := encoding.Validated[*request.UpdateShortURLRequest](r)
+		if len(problems) > 0 {
+			respondWithJSON(w, r, http.StatusBadRequest, problems, logger)
+			return
+		}
+		if err != nil {
+			HandleInternalServerError(w, r, err, logger, "failed to decode JSON request")
+			return
+		}
+
+		err = urlRepo.UpdateShortURL(shortURL, originalURL.OriginalURL)
+		if err != nil {
+			if errors.Is(err, commonErr.ErrShortURLNotFound) {
+				response := map[string]string{
+					"message": err.Error(),
+				}
+				respondWithJSON(w, r, http.StatusNotFound, response, logger)
+				return
+			}
+			HandleInternalServerError(w, r, err, logger, "error while updating the short url")
+			return
+		}
+
+		response := map[string]string{
+			"short_url":    shortURL,
+			"original_url": originalURL.OriginalURL,
+		}
+		respondWithJSON(w, r, http.StatusOK, response, logger)
+	}
+}
