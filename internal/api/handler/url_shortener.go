@@ -7,13 +7,14 @@ import (
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/api/encoding"
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/api/request"
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/api/utils"
+	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/cache"
 	commonErr "github.com/Mohd-Sayeedul-Hoda/tinypath/internal/errors"
 	jsonlog "github.com/Mohd-Sayeedul-Hoda/tinypath/internal/jsonLog"
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/models"
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/repository"
 )
 
-func CreateShortLink(logger *jsonlog.Logger, urlRepo repository.UrlShortener) http.HandlerFunc {
+func CreateShortLink(logger *jsonlog.Logger, urlRepo repository.UrlShortener, cacheRepo cache.CacheRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		shortURL, problems, err := encoding.Validated[*request.ShortURL](r)
@@ -53,6 +54,13 @@ func CreateShortLink(logger *jsonlog.Logger, urlRepo repository.UrlShortener) ht
 			HandleInternalServerError(w, r, err, logger, "unable to create short url")
 			return
 		}
+
+		go func() {
+			err := cacheRepo.Set(modelURL.ShortURL, modelURL.OriginalURL)
+			if err != nil {
+				logger.PrintError(err, nil)
+			}
+		}()
 
 		response := request.ShortUrlResp{
 			ID:          modelURL.ID,
@@ -105,7 +113,7 @@ func GetShortLink(logger *jsonlog.Logger, urlRepo repository.UrlShortener) http.
 	}
 }
 
-func DeleteShortLink(logger *jsonlog.Logger, urlRepo repository.UrlShortener) http.HandlerFunc {
+func DeleteShortLink(logger *jsonlog.Logger, urlRepo repository.UrlShortener, cacheRepo cache.CacheRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		shortURL := r.PathValue("short")
@@ -131,6 +139,13 @@ func DeleteShortLink(logger *jsonlog.Logger, urlRepo repository.UrlShortener) ht
 			return
 		}
 
+		go func() {
+			err := cacheRepo.Delete(shortURL)
+			if err != nil {
+				logger.PrintError(err, nil)
+			}
+		}()
+
 		response := map[string]string{
 			"message": "short url deleted",
 		}
@@ -138,7 +153,7 @@ func DeleteShortLink(logger *jsonlog.Logger, urlRepo repository.UrlShortener) ht
 	}
 }
 
-func UpdateShortLink(logger *jsonlog.Logger, urlRepo repository.UrlShortener) http.HandlerFunc {
+func UpdateShortLink(logger *jsonlog.Logger, urlRepo repository.UrlShortener, cacheRepo cache.CacheRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		shortURL := r.PathValue("short")
 		if shortURL == "" {
@@ -172,6 +187,14 @@ func UpdateShortLink(logger *jsonlog.Logger, urlRepo repository.UrlShortener) ht
 			return
 		}
 
+		go func() {
+			err := cacheRepo.Set(shortURL, originalURL.OriginalURL)
+			if err != nil {
+				logger.PrintError(err, nil)
+				cacheRepo.Delete(shortURL)
+			}
+		}()
+
 		response := map[string]string{
 			"short_url":    shortURL,
 			"original_url": originalURL.OriginalURL,
@@ -180,7 +203,7 @@ func UpdateShortLink(logger *jsonlog.Logger, urlRepo repository.UrlShortener) ht
 	}
 }
 
-func ShortURLRedirect(logger *jsonlog.Logger, urlRepo repository.UrlShortener) http.HandlerFunc {
+func ShortURLRedirect(logger *jsonlog.Logger, urlRepo repository.UrlShortener, cacheRepo cache.CacheRepo) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		shortURL := r.PathValue("short")
@@ -192,7 +215,18 @@ func ShortURLRedirect(logger *jsonlog.Logger, urlRepo repository.UrlShortener) h
 			return
 		}
 
-		originalURL, err := urlRepo.GetOriginalURL(shortURL)
+		originalURL, err := cacheRepo.Get(shortURL)
+		if originalURL != "" {
+			go incrementAccessCount(urlRepo, shortURL, logger)
+			http.Redirect(w, r, originalURL, http.StatusPermanentRedirect)
+			return
+		}
+
+		if err != nil {
+			logger.PrintError(err, nil)
+		}
+
+		originalURL, err = urlRepo.GetOriginalURL(shortURL)
 		if err != nil {
 			if errors.Is(err, commonErr.ErrShortURLNotFound) {
 				response := map[string]string{
@@ -206,13 +240,23 @@ func ShortURLRedirect(logger *jsonlog.Logger, urlRepo repository.UrlShortener) h
 		}
 
 		go func() {
-			err := urlRepo.IncrementAccessCount(shortURL)
+			err := cacheRepo.Set(shortURL, originalURL)
 			if err != nil {
 				logger.PrintError(err, nil)
 			}
 		}()
+		go incrementAccessCount(urlRepo, shortURL, logger)
 
 		http.Redirect(w, r, originalURL, http.StatusPermanentRedirect)
 	}
 
+}
+
+func incrementAccessCount(repo repository.UrlShortener, shortURL string, logger *jsonlog.Logger) {
+	if err := repo.IncrementAccessCount(shortURL); err != nil {
+		logger.PrintError(err, map[string]string{
+			"component": "access_counter",
+			"shortURL":  shortURL,
+		})
+	}
 }

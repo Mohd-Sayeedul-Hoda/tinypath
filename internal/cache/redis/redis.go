@@ -22,6 +22,11 @@ func NewCacheRepo(cfg *config.Config) (cache.CacheRepo, error) {
 	}
 	client := redis.NewClient(opts)
 
+	err = client.Ping(context.Background()).Err()
+	if err != nil {
+		return nil, err
+	}
+
 	return &cacheRepo{
 		client: client,
 	}, nil
@@ -34,7 +39,6 @@ func (c *cacheRepo) Get(key string) (string, error) {
 			return "", commonErr.ErrShortURLNotFound
 		}
 		return "", commonErr.NewCustomInternalErr(err)
-
 	}
 	return value, nil
 }

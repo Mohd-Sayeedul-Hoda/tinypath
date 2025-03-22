@@ -87,6 +87,7 @@ func run(ctx context.Context, getenv func(string) string, w io.Writer) error {
 		cacheRepository = redis.NewNoCacheRepo(cfg)
 	} else {
 		cacheRepository = redisRepo
+		log.PrintInfo("connected to redis server", nil)
 	}
 
 	srv := api.NewServer(cfg, log, urlRepo, cacheRepository)
