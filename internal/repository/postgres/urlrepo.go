@@ -76,10 +76,15 @@ func (u *URLRepo) IncrementAccessCount(shortURL string) error {
 	query := `UPDATE urls SET access_count = access_count + 1,
 	updated_at = NOW() where short_url = $1`
 
-	_, err := u.pool.Exec(context.Background(), query, shortURL)
+	result, err := u.pool.Exec(context.Background(), query, shortURL)
 	if err != nil {
 		return commonErr.NewCustomInternalErr(err)
 	}
+
+	if result.RowsAffected() == 0 {
+		return commonErr.ErrShortURLNotFound
+	}
+
 	return nil
 }
 

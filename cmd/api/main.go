@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/api"
+	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/cache"
+	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/cache/redis"
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/config"
 	"github.com/Mohd-Sayeedul-Hoda/tinypath/internal/db"
 	jsonlog "github.com/Mohd-Sayeedul-Hoda/tinypath/internal/jsonLog"
@@ -78,7 +80,16 @@ func run(ctx context.Context, getenv func(string) string, w io.Writer) error {
 
 	urlRepo := postgres.NewURLShortenerRepo(conn)
 
-	srv := api.NewServer(cfg, log, urlRepo)
+	var cacheRepository cache.CacheRepo
+	redisRepo, err := redis.NewCacheRepo(cfg)
+	if err != nil {
+		log.PrintError(err, map[string]string{"message": "Redis unavailable, using no-cache implementation"})
+		cacheRepository = redis.NewNoCacheRepo(cfg)
+	} else {
+		cacheRepository = redisRepo
+	}
+
+	srv := api.NewServer(cfg, log, urlRepo, cacheRepository)
 
 	httpServer := http.Server{
 		Addr:    net.JoinHostPort(cfg.Host, strconv.Itoa(cfg.Port)),

@@ -14,6 +14,9 @@ type Config struct {
 		MaxIdleConns int
 		MaxIdleTime  string
 	}
+	Cache struct {
+		CSN string
+	}
 }
 
 func InitializeConfig(getenv func(string) string) *Config {
