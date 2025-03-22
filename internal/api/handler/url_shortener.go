@@ -205,6 +205,13 @@ func ShortURLRedirect(logger *jsonlog.Logger, urlRepo repository.UrlShortener) h
 			return
 		}
 
+		go func() {
+			err := urlRepo.IncrementAccessCount(shortURL)
+			if err != nil {
+				logger.PrintError(err, nil)
+			}
+		}()
+
 		http.Redirect(w, r, originalURL, http.StatusPermanentRedirect)
 	}
 
