@@ -15,7 +15,7 @@ type Config struct {
 		MaxIdleTime  string
 	}
 	Cache struct {
-		CSN string
+		DSN string
 	}
 }
 
@@ -28,6 +28,7 @@ func InitializeConfig(getenv func(string) string) *Config {
 	flag.StringVar(&cfg.Env, "env", "development", "Enviroment(production|staging|development)")
 
 	flag.StringVar(&cfg.DB.DSN, "db-dsn", getenv("URLSHORTNER_DB_DSN"), "PostgreSQL dsn string")
+	flag.StringVar(&cfg.Cache.DSN, "cache-dsn", getenv("REDIS_DSN"), "Redis dsn string")
 
 	flag.StringVar(&cfg.DB.MaxIdleTime, "db-max-idle-time", "10m", "PostgerSQL max connection time")
 	flag.IntVar(&cfg.DB.MaxOpenConns, "db-max-open-conns", 15, "PostgreSQL max open conncetions")

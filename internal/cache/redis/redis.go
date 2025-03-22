@@ -16,7 +16,7 @@ type cacheRepo struct {
 }
 
 func NewCacheRepo(cfg *config.Config) (cache.CacheRepo, error) {
-	opts, err := redis.ParseURL(cfg.Cache.CSN)
+	opts, err := redis.ParseURL(cfg.Cache.DSN)
 	if err != nil {
 		return nil, err
 	}
