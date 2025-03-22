@@ -70,7 +70,7 @@ func CreateShortLink(logger *jsonlog.Logger, urlRepo repository.UrlShortener, ca
 			UpdatedAt:   modelURL.UpdatedAt,
 		}
 
-		respondWithJSON(w, r, http.StatusOK, response, logger)
+		respondWithJSON(w, r, http.StatusCreated, response, logger)
 	}
 }
 
